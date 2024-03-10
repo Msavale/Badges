@@ -1,0 +1,87 @@
+package main
+
+import (
+	"container/heap"
+	"fmt"
+	"math"
+)
+
+type Edge struct {
+	to     int
+	weight int
+}
+
+type Node struct {
+	index int
+	dist  int
+}
+
+type PriorityQueue []*Node
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].dist < pq[j].dist
+}
+
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+}
+
+func (pq *PriorityQueue) Push(x interface{}) {
+	item := x.(*Node)
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	*pq = old[0 : n-1]
+	return item
+}
+
+func dijkstra(graph [][]Edge, start int) []int {
+	n := len(graph)
+	dist := make([]int, n)
+	for i := range dist {
+		dist[i] = math.MaxInt32
+	}
+	dist[start] = 0
+
+	pq := make(PriorityQueue, 0)
+	heap.Push(&pq, &Node{index: start, dist: 0})
+
+	for len(pq) > 0 {
+		node := heap.Pop(&pq).(*Node)
+		u := node.index
+
+		for _, edge := range graph[u] {
+			v := edge.to
+			alt := dist[u] + edge.weight
+			if alt < dist[v] {
+				dist[v] = alt
+				heap.Push(&pq, &Node{index: v, dist: alt})
+			}
+		}
+	}
+	return dist
+}
+
+func main() {
+	graph := [][]Edge{
+		{{to: 1, weight: 4}, {to: 2, weight: 1}},       // Node 0
+		{{to: 3, weight: 1}, {to: 4, weight: 5}},       // Node 1
+		{{to: 1, weight: 2}, {to: 3, weight: 2}},       // Node 2
+		{{to: 4, weight: 1}},                           // Node 3
+		{{to: 0, weight: 3}},                           // Node 4
+	}
+
+	startNode := 0
+	distances := dijkstra(graph, startNode)
+
+	fmt.Println("Shortest distances from node", startNode, "to:")
+	for i, distance := range distances {
+		fmt.Printf("Node %d: %d\n", i, distance)
+	}
+}
